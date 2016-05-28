@@ -148,9 +148,9 @@ def parse_events(sock, loop_count=100):
                 report_pkt_offset = 0
                 for i in range(0, num_reports):
                     beacon_data = {}
-                    beacon_data['udid'] = pkt[report_pkt_offset -22: report_pkt_offset - 6]
-                    beacon_data['major'] = pkt[report_pkt_offset -6: report_pkt_offset - 4]
-                    beacon_data['minor'] = pkt[report_pkt_offset -4: report_pkt_offset - 2]
+                    beacon_data['udid'] = returnstringpacket(pkt[report_pkt_offset -22: report_pkt_offset - 6])
+                    beacon_data['major'] = returnstringpacket(pkt[report_pkt_offset -6: report_pkt_offset - 4])
+                    beacon_data['minor'] = returnstringpacket(pkt[report_pkt_offset -4: report_pkt_offset - 2])
                     mac_addr = packed_bdaddr_to_string(pkt[report_pkt_offset + 3:report_pkt_offset + 9])
                     beacon_data['txpower'] = struct.unpack("b", pkt[report_pkt_offset -2])
                     beacon_data['rssi'] = struct.unpack("b", pkt[report_pkt_offset -1])
@@ -158,4 +158,5 @@ def parse_events(sock, loop_count=100):
             done = True
     sock.setsockopt( bluez.SOL_HCI, bluez.HCI_FILTER, old_filter )
     return beacons
+
 
