@@ -1,11 +1,13 @@
 #
 # based on Taka Wang's work here: https://github.com/taka-wang/py-beacon
 #
-import json
+from datetime import datetime
 from paho.mqtt import client as mqtt
 import blescan
 import bluetooth._bluetooth as bluez
+import calendar
 import ConfigParser
+import json
 
 
 class Scanner(object):
@@ -93,6 +95,9 @@ class BeaconReport(object):
 
     def report(self, topic, data):
         if self.mqtt_client:
+            d = datetime.utcnow()
+            timestamp = calendar.timegm(d.utctimetuple())
+            data['tst'] = timestamp
             self.mqtt_client.publish(topic, json.dumps(data))
 
     def do_scan(self):
