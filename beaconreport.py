@@ -60,14 +60,20 @@ class BeaconReport(BaseMQTTClient):
         for beacon, data in self.beacons.items():
             do_update = False
             if (now - data.get('datetime')).total_seconds() < 120:
-                state = 'home'
-                do_update = True
+                if data.get('state') != 'home':
+                    state = 'home'
+                    do_update = True
             else:
-                state = 'not_home'
+                if data.get('state') != 'not_home':
+                    state = 'not_home'
+                    do_update = True
+
+            if (now - data.get('last_pub')) > 120:
                 do_update = True
 
             if do_update:
                 self.update_state(beacon, state)
+                data['last_pub'] = datetime.datetime.utcnow()
                 data['state'] = state
 
 
