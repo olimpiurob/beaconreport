@@ -43,14 +43,12 @@ class BeaconReport(BaseMQTTClient):
                 device = device.strip()
                 if device not in beacons.keys():
                     beacons[device] = {}
-        print("Beacons: {}".format(beacons))
         return beacons
 
     def add_known_beacon(self, mac_addr):
         with open("known_devices", "ab") as file:
             file.write(mac_addr)
             file.write('\n')
-        print("Added beacon: {}".format(mac_addr))
 
     def report(self, beacon, data):
         if self.mqtt_client:
@@ -95,7 +93,6 @@ class BeaconReport(BaseMQTTClient):
                 self.update_state(beacon, state)
                 data['last_pub'] = datetime.utcnow()
                 data['state'] = state
-        print("Beacons: {}".format(self.beacons))
 
 if __name__ == '__main__':
     beacon_report = BeaconReport('config')
