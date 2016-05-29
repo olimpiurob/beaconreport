@@ -68,7 +68,7 @@ class BeaconReport(BaseMQTTClient):
                     state = 'not_home'
                     do_update = True
 
-            if (now - data.get('last_pub', now)) > 120:
+            if (now - data.get('last_pub', now)).total_seconds() > 120:
                 do_update = True
 
             if do_update:
