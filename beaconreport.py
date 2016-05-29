@@ -8,6 +8,7 @@ import blescan
 import bluetooth._bluetooth as bluez
 import calendar
 import json
+import os
 
 
 class Scanner(object):
@@ -31,8 +32,25 @@ class BeaconReport(BaseMQTTClient):
     """BeaconReport class"""
     def __init__(self, config_file='config'):
         super(BeaconReport, self).__init__(config_file=config_file)
-        self.beacons = {}
+        self.beacons = self.get_known_beacons()
         self.scanner = Scanner()
+
+    def get_known_beacons(self):
+        beacons = {}
+        with open("known_devices", "a+") as file:
+            file.seek(0)
+            for device in file:
+                device = device.strip()
+                if device not in beacons.keys():
+                    beacons[device] = {}
+        print("Beacons: {}".format(beacons))
+        return beacons
+
+    def add_known_beacon(self, mac_addr):
+        with open("known_devices", "ab") as file:
+            file.write(mac_addr)
+            file.write('\n')
+        print("Added beacon: {}".format(mac_addr))
 
     def report(self, beacon, data):
         if self.mqtt_client:
@@ -48,6 +66,7 @@ class BeaconReport(BaseMQTTClient):
             for beacon, data in self.scanner.scan().items():
                 if beacon not in self.beacons.keys():
                     self.beacons[beacon] = {}
+                    self.add_known_beacon(beacon)
                 self.report(beacon, data)
 
     def update_state(self, beacon, state):
@@ -59,12 +78,13 @@ class BeaconReport(BaseMQTTClient):
         now = datetime.utcnow()
         for beacon, data in self.beacons.items():
             do_update = False
-            if (now - data.get('datetime')).total_seconds() < 120:
-                if data.get('state') != 'home':
+            state = data.get('state')
+            if data.get('datetime') and (now - data.get('datetime')).total_seconds() < 120:
+                if state != 'home':
                     state = 'home'
                     do_update = True
             else:
-                if data.get('state') != 'not_home':
+                if state != 'not_home':
                     state = 'not_home'
                     do_update = True
 
@@ -75,7 +95,7 @@ class BeaconReport(BaseMQTTClient):
                 self.update_state(beacon, state)
                 data['last_pub'] = datetime.utcnow()
                 data['state'] = state
-
+        print("Beacons: {}".format(self.beacons))
 
 if __name__ == '__main__':
     beacon_report = BeaconReport('config')
