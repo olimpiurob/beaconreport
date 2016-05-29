@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #
 # based on Taka Wang's work here: https://github.com/taka-wang/py-beacon
 #
