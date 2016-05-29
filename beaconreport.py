@@ -73,7 +73,7 @@ class BeaconReport(BaseMQTTClient):
 
             if do_update:
                 self.update_state(beacon, state)
-                data['last_pub'] = datetime.datetime.utcnow()
+                data['last_pub'] = datetime.utcnow()
                 data['state'] = state
 
 
