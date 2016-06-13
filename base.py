@@ -1,5 +1,9 @@
 from paho.mqtt import client as mqtt
 import ConfigParser
+import socket
+import time
+
+MAX_RECONNECT_WAIT = 300  # seconds
 
 
 class BaseMQTTClient(object):
@@ -40,6 +44,27 @@ class BaseMQTTClient(object):
         ret["topic_id"] = config.get('MQTT', 'topic_id')
         return ret
 
+    def _on_disconnect(self, client, userdata, rc):
+        """Disconnected callback."""
+        # When disconnected because of calling disconnect()
+        if rc == 0:
+            return
+
+        tries = 0
+        wait_time = 0
+
+        while True:
+            try:
+                if client.reconnect() == 0:
+                    break
+            except socket.error:
+                pass
+
+            wait_time = min(2**tries, MAX_RECONNECT_WAIT)
+            # It is ok to sleep here as we are in the MQTT thread.
+            time.sleep(wait_time)
+            tries += 1
+
     def init_mqtt(self):
         """Init MQTT connection"""
         proto = mqtt.MQTTv311
@@ -58,6 +83,8 @@ class BaseMQTTClient(object):
             client.tls_set(self.certificate,
                            certfile=self.client_cert,
                            keyfile=self.client_key)
+
+        client.on_disconnect = self._on_disconnect
 
         try:
             client.connect(self.url, self.port, self.keepalive)
