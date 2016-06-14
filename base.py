@@ -1,7 +1,14 @@
 from paho.mqtt import client as mqtt
 import ConfigParser
+import logging
+import logging.handlers
 import socket
 import time
+logger = logging.getLogger('BeaconReport')
+logger.setLevel(logging.DEBUG)
+
+handler = logging.handlers.SysLogHandler(address='/dev/log')
+logger.addHandler(handler)
 
 MAX_RECONNECT_WAIT = 300  # seconds
 
@@ -46,6 +53,7 @@ class BaseMQTTClient(object):
 
     def _on_disconnect(self, client, userdata, rc):
         """Disconnected callback."""
+        logger.info('Disconnected from the MQTT server.')
         # When disconnected because of calling disconnect()
         if rc == 0:
             return
@@ -56,6 +64,7 @@ class BaseMQTTClient(object):
         while True:
             try:
                 if client.reconnect() == 0:
+                    logger.info('Reconnected to the MQTT server.')
                     break
             except socket.error:
                 pass
@@ -88,6 +97,7 @@ class BaseMQTTClient(object):
 
         try:
             client.connect(self.url, self.port, self.keepalive)
+            logger.info('Connected to the MQTT server.')
             client.loop_start()
             return client
         except Exception, e:
