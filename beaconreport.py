@@ -3,7 +3,7 @@
 # based on Taka Wang's work here: https://github.com/taka-wang/py-beacon
 #
 from datetime import datetime
-from base import BaseMQTTClient
+from base import BaseMQTTClient, logger
 import blescan
 import bluetooth._bluetooth as bluez
 import calendar
@@ -22,6 +22,7 @@ class Scanner(object):
             blescan.hci_le_set_scan_parameters(self.sock)
             blescan.hci_enable_le_scan(self.sock)
         except Exception, e:
+            logger.critical('Scan failed: {}'.format(str(e)))
             print e
 
     def scan(self):
@@ -43,12 +44,14 @@ class BeaconReport(BaseMQTTClient):
                 device = device.strip()
                 if device not in beacons.keys():
                     beacons[device] = {}
+                    logger.info('Loaded known_device: {}'.format(device))
         return beacons
 
     def add_known_beacon(self, mac_addr):
         with open("known_devices", "ab") as file:
             file.write(mac_addr)
             file.write('\n')
+            logger.info('Added device to known_devices: {}'.format(mac_addr))
 
     def report(self, beacon, data):
         if self.mqtt_client:
@@ -58,6 +61,7 @@ class BeaconReport(BaseMQTTClient):
             data['tst'] = timestamp
             self.beacons[beacon]['datetime'] = d
             self.mqtt_client.publish(topic, json.dumps(data))
+            logger.info("Published beacon: {}'s data: {}".format(beacon, data))
 
     def do_scan(self):
         if self.scanner:
@@ -71,6 +75,7 @@ class BeaconReport(BaseMQTTClient):
         if self.mqtt_client:
             topic = self.topic_id + '%s' % beacon + '/state'
             self.mqtt_client.publish(topic, state)
+            logger.info("Updated state for: {} to: {}".format(beacon, state))
 
     def check_states(self):
         now = datetime.utcnow()
@@ -93,7 +98,7 @@ class BeaconReport(BaseMQTTClient):
                 self.update_state(beacon, state)
                 data['last_pub'] = datetime.utcnow()
                 data['state'] = state
-
+        logger.info('Checked states for {}'.format(self.beacons.items()))
 if __name__ == '__main__':
     beacon_report = BeaconReport('config')
     while True:
