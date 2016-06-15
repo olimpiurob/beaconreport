@@ -16,6 +16,7 @@ DEBUG = False
 # should be used for BLE. Always start a struct.pack() format string with "<"
 
 import os
+import socket
 import sys
 import struct
 import bluetooth._bluetooth as bluez
@@ -128,11 +129,16 @@ def parse_events(sock, loop_count=100):
     myFullList = []
     beacons = {}
     for i in range(0, loop_count):
-        pkt = sock.recv(255)
+        sock.settimeout(10)
+        try:
+            pkt = sock.recv(255)
+        except (socket.timeout, socket.error, bluez.timeout) as e:
+            print "Connection error: {}".format(e)
+            return {}
         ptype, event, plen = struct.unpack("BBB", pkt[:3])
         #print "--------------" 
         if event == bluez.EVT_INQUIRY_RESULT_WITH_RSSI:
-		i =0
+                i =0
         elif event == bluez.EVT_NUM_COMP_PKTS:
                 i =0 
         elif event == bluez.EVT_DISCONN_COMPLETE:
@@ -158,5 +164,3 @@ def parse_events(sock, loop_count=100):
             done = True
     sock.setsockopt( bluez.SOL_HCI, bluez.HCI_FILTER, old_filter )
     return beacons
-
-
