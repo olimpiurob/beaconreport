@@ -5,7 +5,7 @@ import logging.handlers
 import socket
 import time
 logger = logging.getLogger('BeaconReport')
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 handler = logging.handlers.SysLogHandler(address='/dev/log')
 logger.addHandler(handler)
